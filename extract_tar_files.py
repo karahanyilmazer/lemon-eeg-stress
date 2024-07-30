@@ -50,5 +50,5 @@ def extract_all_tar_gz_in_directory(directory_path, extract_path='.'):
 
 
 # Example usage:
-source_dir = os.path.join(os.getcwd(), 'data', 'EEG')
+source_dir = os.path.join(os.getcwd(), 'data', 'EEG_preprocessed')
 extract_all_tar_gz_in_directory(source_dir, source_dir)
