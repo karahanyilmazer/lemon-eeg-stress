@@ -12,12 +12,12 @@ from src.utils.DataLoader import DataLoader
 
 # %%
 # Get the data directory
-base_dir = os.path.join(os.getcwd(), 'data', 'EEG')
+base_dir = os.path.join(os.getcwd(), 'data', 'EEG_preprocessed')
 # Get a list of all the subjects
 subjects = os.listdir(base_dir)
 
 # Initialize the data loader
-loader = DataLoader()
+loader = DataLoader(os.path.join(os.getcwd(), 'data'))
 
 # Initialize the feature matrices
 n_subs_per_mat = len(subjects)
@@ -96,14 +96,14 @@ loader.save_pkl(
     X_bp_abs,
     os.path.join(
         'feat_mats',
-        f'X_test_bp_abs',
+        f'X_bp_abs',
     ),
 )
 loader.save_pkl(
     X_bp_rel,
     os.path.join(
         'feat_mats',
-        f'X_test_bp_rel',
+        f'X_bp_rel',
     ),
 )
 
