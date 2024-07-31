@@ -2,13 +2,12 @@
 import os
 import sys
 
-import matplotlib.pyplot as plt
 import mne
 import numpy as np
 
-sys.path.append(os.path.join(os.getcwd(), '..', 'eeg-classes'))
-from src.preprocessing.FeatureExtractor import FeatureExtractor
-from src.utils.DataLoader import DataLoader
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'eeg-classes'))
+from src.preprocessing.FeatureExtractor import FeatureExtractor  # type: ignore
+from src.utils.DataLoader import DataLoader  # type: ignore
 
 # %%
 # Get the data directory
