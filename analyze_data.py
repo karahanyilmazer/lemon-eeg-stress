@@ -6,7 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
+from sklearn.svm import SVR
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'eeg-classes'))
 from src.utils.DataLoader import DataLoader  # type: ignore
@@ -38,7 +38,7 @@ y = label_dict[selected_label]
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8)
 
 # Create a pipeline
-pipe = Pipeline([('scaler', StandardScaler()), ('pca', PCA()), ('svc', SVC())])
+pipe = Pipeline([('scaler', StandardScaler()), ('pca', PCA()), ('svr', SVR())])
 pipe.fit(X_train, y_train)
 
 acc_score = pipe.score(X_train, y_train)
@@ -46,6 +46,6 @@ acc_score = pipe.score(X_train, y_train)
 # Print the results
 print(f'Feature matrix:\t{selected_feat}')
 print(f'Labels:\t\t{selected_label}\n')
-print('Accuracy on training data:', acc_score)
+print('R^2 on training data:', acc_score)
 
 # %%
