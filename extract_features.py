@@ -95,14 +95,14 @@ loader.save_pkl(
     X_bp_abs,
     os.path.join(
         'feat_mats',
-        f'X_bp_abs',
+        'X_bp_abs',
     ),
 )
 loader.save_pkl(
     X_bp_rel,
     os.path.join(
         'feat_mats',
-        f'X_bp_rel',
+        'X_bp_rel',
     ),
 )
 
