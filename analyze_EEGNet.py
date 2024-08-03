@@ -1,18 +1,13 @@
 # %%
 import os
 
-import matplotlib.pyplot as plt
 import mne
 import numpy as np
 import pandas as pd
-import seaborn as sn
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import KFold, train_test_split
-from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 from torchsummary import summary
 from tqdm import tqdm
@@ -23,7 +18,6 @@ class EEGNet(nn.Module):  # EEGNET-8,2
     def __init__(
         self,
         chans=22,
-        classes=4,  # Retain the parameter for flexibility, but won't be used in the FC layer
         time_points=257,
         f1=8,
         f2=16,
@@ -213,7 +207,7 @@ learning_rate = 0.01
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # Training Loop with Validation
-num_epochs = 500
+num_epochs = 300
 loss_list = []
 val_loss_list = []
 
@@ -247,7 +241,9 @@ for epoch in range(num_epochs):
     val_loss_list.append(val_epoch_loss)
 
     print(
-        f'Epoch {epoch+1}/{num_epochs},\tLoss: {epoch_loss:.4f},\tValidation Loss: {val_epoch_loss:.4f}'
+        f'Epoch {epoch+1}/{num_epochs},\t'
+        f'Loss: {epoch_loss:.4f},\t'
+        f'Validation Loss: {val_epoch_loss:.4f}'
     )
 
 average_loss = running_loss / len(train_loader.dataset)
@@ -255,6 +251,6 @@ average_val_loss = val_running_loss / len(val_loader.dataset)
 print('Average Loss:', average_loss)
 print('Average Validation Loss:', average_val_loss)
 
-torch.save(model, 'my_model.pth')
+torch.save(model, 'my_model_2.pth')
 
 # %%
