@@ -136,6 +136,7 @@ all_epochs = mne.concatenate_epochs(epochs_list)
 # %%
 n_chans = 19
 n_times = 640
+batch_size = 64
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = EEGNet(time_points=n_times, chans=n_chans).to(device)
@@ -167,28 +168,42 @@ if np.any(np.isnan(y)) or np.any(np.isinf(y)):
     raise ValueError('Labels contain NaNs or infinities.')
 
 # Making the X and y tensors for K-Fold Cross Validation
-X_tensor = torch.Tensor(X).unsqueeze(1)
-y_tensor = torch.LongTensor(y)
+# X_tensor = torch.Tensor(X).unsqueeze(1)
+# y_tensor = torch.LongTensor(y)
 
 # Spliting  Data: 80% for Train and 20% for Test
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+    X, y, test_size=0.2, random_state=41
+)
+
+X_train, X_val, y_train, y_val = train_test_split(
+    X_train, y_train, test_size=0.2, random_state=42
 )
 
 # Converting to Tensor
 X_train = torch.Tensor(X_train).unsqueeze(1).to(device)
+X_val = torch.Tensor(X_val).unsqueeze(1).to(device)
 X_test = torch.Tensor(X_test).unsqueeze(1).to(device)
 y_train = torch.LongTensor(y_train).to(device)
+y_val = torch.LongTensor(y_val).to(device)
 y_test = torch.LongTensor(y_test).to(device)
 
 # Creating Tensor Dataset
 train_dataset = TensorDataset(X_train, y_train)
+val_dataset = TensorDataset(X_val, y_val)
 test_dataset = TensorDataset(X_test, y_test)
+
+# Create Data Loaders
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 # Printing the sizes
 print('Size of X_train:', X_train.size())
+print('Size of X_val:', X_train.size())
 print('Size of X_test:', X_test.size())
 print('Size of y_train:', y_train.size())
+print('Size of y_val:', y_train.size())
 print('Size of y_test:', y_test.size())
 
 # %%
@@ -197,35 +212,48 @@ criterion = nn.L1Loss()
 learning_rate = 0.01
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
+# Training Loop with Validation
 num_epochs = 500
-batch_size = 64
 loss_list = []
-for epoch in range(num_epochs):
-    model.train()
-    X_train, y_train = shuffle(X_train, y_train)
-    running_loss = 0.0
-    # correct = 0
-    # total = 0
-    for i in range(0, len(X_train), batch_size):
-        inputs = X_train[i : i + batch_size].to(device)
-        labels = y_train[i : i + batch_size].to(device)
+val_loss_list = []
 
+for epoch in range(num_epochs):
+    # Training
+    # ==================================================================================
+    model.train()
+    running_loss = 0.0
+    for inputs, labels in train_loader:
         optimizer.zero_grad()
         outputs = model(inputs)
         loss = criterion(outputs.squeeze(), labels)
         loss.backward()
         optimizer.step()
         running_loss += loss.item() * inputs.size(0)
-        # _, predicted = torch.max(outputs, 1)
-        # total += labels.size(0)
-        # correct += (predicted == labels).sum().item()
 
-    epoch_loss = running_loss / len(X_train)
+    epoch_loss = running_loss / len(train_loader.dataset)
     loss_list.append(epoch_loss)
-    # epoch_accuracy = correct / total
-    print(f'Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}')
-average_loss = running_loss / len(X_train)
+
+    # Validation
+    # ==================================================================================
+    model.eval()
+    val_running_loss = 0.0
+    with torch.no_grad():
+        for inputs, labels in val_loader:
+            outputs = model(inputs)
+            loss = criterion(outputs.squeeze(), labels)
+            val_running_loss += loss.item() * inputs.size(0)
+
+    val_epoch_loss = val_running_loss / len(val_loader.dataset)
+    val_loss_list.append(val_epoch_loss)
+
+    print(
+        f'Epoch {epoch+1}/{num_epochs},\tLoss: {epoch_loss:.4f},\tValidation Loss: {val_epoch_loss:.4f}'
+    )
+
+average_loss = running_loss / len(train_loader.dataset)
+average_val_loss = val_running_loss / len(val_loader.dataset)
 print('Average Loss:', average_loss)
+print('Average Validation Loss:', average_val_loss)
 
 torch.save(model, 'my_model.pth')
 
