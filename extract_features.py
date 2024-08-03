@@ -4,12 +4,15 @@ import sys
 
 import mne
 import numpy as np
+from tqdm import tqdm
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'eeg-classes'))
 from src.preprocessing.FeatureExtractor import FeatureExtractor  # type: ignore
 from src.utils.DataLoader import DataLoader  # type: ignore
 
 # %%
+mne.set_log_level('ERROR')
+
 # Get the data directory
 base_dir = os.path.join(os.getcwd(), 'data', 'EEG_preprocessed')
 # Get a list of all the subjects
@@ -30,9 +33,10 @@ X_var = np.zeros((n_subs_per_mat, 2 * n_feats_var))
 
 # Define the frequency bands of interest
 freq_bands = ['theta', 'alpha', 'beta', 'low_gamma']
+subj_list = []
 
 
-for i, subj in enumerate(subjects):
+for i, subj in tqdm(enumerate(subjects), total=len(subjects)):
     # EYES OPEN
     # ==================================================================================
     # Read in the data
@@ -89,20 +93,22 @@ for i, subj in enumerate(subjects):
     # X_welch[i, :n_feats_welch] = extractor.get_welch_feat(data, ch_names).ravel()
     # X_var[i, :n_feats_var] = extractor.get_var_feat(data, ch_names).ravel()
 
+    subj_list.append(subj)
+
 # %%
 # Save the feature matrices
 loader.save_pkl(
     X_bp_abs,
     os.path.join(
         'feat_mats',
-        'X_bp_abs',
+        'X_bp_abs_new',
     ),
 )
 loader.save_pkl(
     X_bp_rel,
     os.path.join(
         'feat_mats',
-        'X_bp_rel',
+        'X_bp_rel_new',
     ),
 )
 
