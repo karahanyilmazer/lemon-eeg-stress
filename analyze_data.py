@@ -6,8 +6,8 @@ import sys
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
-from sklearn.metrics import mean_absolute_error, r2_score
-from sklearn.model_selection import KFold, cross_val_score, train_test_split
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import KFold, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
@@ -24,18 +24,27 @@ data_dir = os.path.join(
     'Emotion_and_Personality_Test_Battery_LEMON',
 )
 
-# Read the data
-df_psq = pd.read_csv(os.path.join(data_dir, 'PSQ.csv'), index_col=0).sort_index()
-df_tas = pd.read_csv(os.path.join(data_dir, 'TAS.csv'), index_col=0).sort_index()
-df_tic = pd.read_csv(os.path.join(data_dir, 'TICS.csv'), index_col=0).sort_index()
-
 # Get a list of all subjects with EEG data
 subj_list = os.listdir(os.path.join(os.getcwd(), 'data', 'EEG_preprocessed'))
 
-# Filter the data based on the subjects
-df_psq = df_psq[df_psq.index.isin(subj_list)]
-df_tas = df_tas[df_tas.index.isin(subj_list)]
-df_tic = df_tic[df_tic.index.isin(subj_list)]
+# Read all possible labels
+df_y = pd.DataFrame()
+for file in os.listdir(data_dir):
+    if file.endswith('.csv'):
+        # Skip the YFAS file with missing data
+        if 'YFAS' in file:
+            continue
+        df = pd.read_csv(os.path.join(data_dir, file), index_col=0).sort_index()
+        df_y = pd.concat([df_y, df], axis=1)
+
+# Clean the NaN values
+y = df_y[df_y.index.isin(subj_list)]
+y = y.dropna(axis=1, thresh=y.shape[0] - 9)
+y = y.dropna(axis=0, thresh=y.shape[1] - 8)
+y = y.ffill()
+
+# Calculate the dropped indices
+dropped_subjects = df_y.index.difference(y.index)
 
 # Load the data
 data_loader = DataLoader(os.path.join(os.getcwd(), 'data'))
@@ -48,7 +57,11 @@ feat_dict = {'X_bp_rel': X_bp_rel, 'X_bp_abs': X_bp_abs}
 
 # Pick the features to use
 selected_feat = 'X_bp_rel'
-X = feat_dict[selected_feat]
+X = pd.DataFrame(
+    feat_dict[selected_feat],
+    index=os.listdir(os.path.join(os.getcwd(), 'data', 'EEG_preprocessed')),
+)
+X = X.drop(dropped_subjects, errors='ignore')
 
 r2_train = []
 r2_test = []
@@ -63,41 +76,39 @@ labels = []
 # Initialize KFold with 5 splits
 kf = KFold(n_splits=5, shuffle=True)
 
-kernel = 'linear'
+kernel = 'poly'
 degree = 3
 
 # Create a pipeline
 pipe = Pipeline([('scaler', StandardScaler()), ('svr', SVR(kernel=kernel))])
 
-# Iterate over the DataFrames
-for df in [df_psq, df_tas, df_tic]:
-    # Iterate over the columns of the DataFrame
-    for selected_label in df.columns:
-        y = df[selected_label]
+# Iterate over the columns of the DataFrame
+for selected_label in y.columns:
+    y_tmp = y[selected_label]
 
-        # Split the data
-        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8)
+    # Split the data
+    X_train, X_test, y_train, y_test = train_test_split(X, y_tmp, train_size=0.8)
 
-        for train_index, test_index in kf.split(X_train):
-            X_cv_train, X_cv_test = X_train[train_index], X_train[test_index]
-            y_cv_train, y_cv_test = y_train.iloc[train_index], y_train.iloc[test_index]
+    for train_index, test_index in kf.split(X_train):
+        X_cv_train, X_cv_test = X_train.iloc[train_index], X_train.iloc[test_index]
+        y_cv_train, y_cv_test = y_train.iloc[train_index], y_train.iloc[test_index]
 
-            # Fit the whole training set
-            pipe.fit(X_cv_train, y_cv_train)
-            y_pred_train = pipe.predict(X_cv_train)
-            y_pred_test = pipe.predict(X_cv_test)
+        # Fit the whole training set
+        pipe.fit(X_cv_train, y_cv_train)
+        y_pred_train = pipe.predict(X_cv_train)
+        y_pred_test = pipe.predict(X_cv_test)
 
-            # Store the values for later
-            r2_train_tmp.append(r2_score(y_cv_train, y_pred_train))
-            r2_test_tmp.append(r2_score(y_cv_test, y_pred_test))
-            mae_train_tmp.append(mean_absolute_error(y_cv_train, y_pred_train))
-            mae_test_tmp.append(mean_absolute_error(y_cv_test, y_pred_test))
+        # Store the values for later
+        r2_train_tmp.append(r2_score(y_cv_train, y_pred_train))
+        r2_test_tmp.append(r2_score(y_cv_test, y_pred_test))
+        mae_train_tmp.append(mean_absolute_error(y_cv_train, y_pred_train))
+        mae_test_tmp.append(mean_absolute_error(y_cv_test, y_pred_test))
 
-        r2_train.append(np.mean(r2_train_tmp))
-        r2_test.append(np.mean(r2_test_tmp))
-        mae_train.append(np.mean(mae_train_tmp))
-        mae_test.append(np.mean(mae_test_tmp))
-        labels.append(selected_label)
+    r2_train.append(np.mean(r2_train_tmp))
+    r2_test.append(np.mean(r2_test_tmp))
+    mae_train.append(np.mean(mae_train_tmp))
+    mae_test.append(np.mean(mae_test_tmp))
+    labels.append(selected_label)
 
 # Print the results
 result_df = pd.DataFrame(
