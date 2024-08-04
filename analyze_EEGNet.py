@@ -117,9 +117,13 @@ for i, subj in tqdm(enumerate(subjects), total=len(subjects)):
     eo_path = os.path.join(base_dir, subj, f'{subj}_EO.set')
     ec_path = os.path.join(base_dir, subj, f'{subj}_EC.set')
     raw_eo = mne.io.read_raw_eeglab(eo_path).resample(128, npad='auto')
+    raw_ec = mne.io.read_raw_eeglab(ec_path).resample(128, npad='auto')
     raw_eo.pick_channels(shared_ch_names)
+    raw_ec.pick_channels(shared_ch_names)
 
-    epochs = mne.make_fixed_length_epochs(raw_eo, duration=5)
+    raw = mne.concatenate_raws([raw_eo, raw_ec])
+
+    epochs = mne.make_fixed_length_epochs(raw, duration=5)
     epochs.drop_bad()
     epochs_list.append(epochs)
     n_epochs_list.append(len(epochs))
@@ -202,7 +206,7 @@ print('Size of y_test:', y_test.size())
 # %%
 # criterion = nn.MSELoss()
 criterion = nn.L1Loss()
-learning_rate = 0.01
+learning_rate = 0.1
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # Training Loop with Validation
@@ -240,8 +244,8 @@ for epoch in range(num_epochs):
     val_loss_list.append(val_epoch_loss)
 
     print(
-        f'Epoch {epoch+1}/{num_epochs},\t'
-        f'Loss: {epoch_loss:.4f},\t'
+        f'Epoch {epoch+1}/{num_epochs}\t'
+        f'Loss: {epoch_loss:.4f}\t'
         f'Validation Loss: {val_epoch_loss:.4f}'
     )
 
@@ -250,6 +254,6 @@ average_val_loss = val_running_loss / len(val_loader.dataset)
 print('Average Loss:', average_loss)
 print('Average Validation Loss:', average_val_loss)
 
-torch.save(model, 'my_model_2.pth')
+torch.save(model, 'my_model_3.pth')
 
 # %%
