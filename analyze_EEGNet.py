@@ -237,7 +237,9 @@ n_times = all_epochs.get_data().shape[2]
 batch_size = 128
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = EEGNet(time_points=n_times, chans=n_chans).to(device)
+print(device)
+# model = EEGNet(time_points=n_times, chans=n_chans).to(device)
+model = ModifiedEEGNet(time_points=n_times, chans=n_chans).to(device)
 input_size = (1, n_chans, n_times)
 summary(model, input_size)
 
