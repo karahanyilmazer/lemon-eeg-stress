@@ -75,6 +75,26 @@ feat_dict = {
     'X_logvar': X_logvar,
 }
 
+# Initialize KFold with 3 splits
+kf = KFold(n_splits=3, shuffle=True)
+
+svr_params = {
+    'kernel': 'rbf',
+}
+
+rf_params = {
+    'n_estimators': 200,
+    'max_depth': 4,
+    'criterion': 'absolute_error',
+}
+
+xg_boost_params = {
+    'n_estimators': 200,
+    'max_depth': 4,
+    'learning_rate': 0.01,
+    'loss': 'absolute_error',
+}
+
 for selected_feat in feat_dict.keys():
     # Pick the features to use
     print('selected_feat: ', selected_feat)
@@ -83,26 +103,6 @@ for selected_feat in feat_dict.keys():
         index=os.listdir(os.path.join(os.getcwd(), 'data', 'EEG_preprocessed')),
     )
     X = X.drop(dropped_subjects, errors='ignore')
-
-    # Initialize KFold with 3 splits
-    kf = KFold(n_splits=3, shuffle=True)
-
-    svr_params = {
-        'kernel': 'rbf',
-    }
-
-    rf_params = {
-        'n_estimators': 200,
-        'max_depth': 4,
-        'criterion': 'absolute_error',
-    }
-
-    xg_boost_params = {
-        'n_estimators': 200,
-        'max_depth': 4,
-        'learning_rate': 0.01,
-        'loss': 'absolute_error',
-    }
 
     # Create a pipeline
     pipe1 = Pipeline([('scaler', StandardScaler()), ('svr', SVR(**svr_params))])
