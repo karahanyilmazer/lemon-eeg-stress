@@ -44,14 +44,18 @@ tics_columns = [col for col in df_y.columns if 'TICS' in col]
 # Sum the selected columns row-wise and assign to a new column
 df_y['TICS_OverallScore'] = df_y[tics_columns].sum(axis=1)
 
+bad_subjs = ['sub-032345', 'sub-032357', 'sub-032450', 'sub-032493', 'sub-032513']
+
 # Clean the NaN values
 y = df_y[df_y.index.isin(subj_list)]
 y = y.dropna(axis=1, thresh=y.shape[0] - 9)
 y = y.dropna(axis=0, thresh=y.shape[1] - 8)
 y = y.ffill()
+y = y.drop(bad_subjs)
 
 # Calculate the dropped indices
 dropped_subjects = df_y.index.difference(y.index)
+dropped_subjects = dropped_subjects.union(bad_subjs)
 
 # Load the data
 data_loader = DataLoader(os.path.join(os.getcwd(), 'data'))

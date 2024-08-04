@@ -83,9 +83,8 @@ mne.set_log_level('ERROR')
 # Get the data directory
 base_dir = os.path.join(os.getcwd(), 'data', 'EEG_preprocessed')
 # Get a list of all the subjects
-subjects = os.listdir(base_dir)
-subjects.pop(167)
-subjects.pop(167)
+bad_subjs = ['sub-032345', 'sub-032357', 'sub-032450', 'sub-032493', 'sub-032513']
+subjects = [subj for subj in os.listdir(base_dir) if subj not in bad_subjs]
 
 n_epochs_list = []
 raw_list = []
