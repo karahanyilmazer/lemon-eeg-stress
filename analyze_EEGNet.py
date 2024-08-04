@@ -255,9 +255,9 @@ data_dir = os.path.join(
     'Emotion_and_Personality_Test_Battery_LEMON',
 )
 y = []
-df = pd.read_csv(os.path.join(data_dir, 'TAS.csv'), index_col=0).sort_index()
+df = pd.read_csv(os.path.join(data_dir, 'PSQ.csv'), index_col=0).sort_index()
 for i, subj in enumerate(subjects):
-    y.extend([df['TAS_OverallScore'][subj]] * n_epochs_list[i])
+    y.extend([float(df['PSQ_OverallScore'][subj])] * n_epochs_list[i])
 
 # Checking the existence of null & inf in the dataset
 if np.any(np.isnan(X)) or np.any(np.isinf(X)):
@@ -282,9 +282,9 @@ X_train, X_val, y_train, y_val = train_test_split(
 X_train = torch.Tensor(X_train).unsqueeze(1).to(device)
 X_val = torch.Tensor(X_val).unsqueeze(1).to(device)
 X_test = torch.Tensor(X_test).unsqueeze(1).to(device)
-y_train = torch.LongTensor(y_train).to(device)
-y_val = torch.LongTensor(y_val).to(device)
-y_test = torch.LongTensor(y_test).to(device)
+y_train = torch.Tensor(y_train).to(device)
+y_val = torch.Tensor(y_val).to(device)
+y_test = torch.Tensor(y_test).to(device)
 
 # Creating Tensor Dataset
 train_dataset = TensorDataset(X_train, y_train)
@@ -305,9 +305,9 @@ print('Size of y_val:', y_train.size())
 print('Size of y_test:', y_test.size())
 
 # %%
-# criterion = nn.MSELoss()
-criterion = nn.L1Loss()
-learning_rate = 0.1
+criterion = nn.MSELoss()
+# criterion = nn.L1Loss()
+learning_rate = 0.01
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # Training Loop with Validation
