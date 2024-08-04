@@ -241,9 +241,11 @@ summary(model, input_size)
 
 # %%
 # Prepare the data
-data = all_epochs.get_data()
+X = all_epochs.get_data()
+del all_epochs
+
 # Normalizing Input features: z-score(mean=0, std=1)
-X = (data - np.mean(data)) / np.std(data)
+X = (X - np.mean(X)) / np.std(X)
 
 # Prepare the labels
 data_dir = os.path.join(
