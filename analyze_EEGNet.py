@@ -111,13 +111,104 @@ shared_ch_names = [
     'Pz',
     'AF3',
 ]
+all_chans = [
+    'FC4',
+    'F7',
+    'Oz',
+    'TP7',
+    'Fz',
+    'F4',
+    'CPz',
+    'CP5',
+    'PO4',
+    'F6',
+    'F8',
+    'FC1',
+    'P6',
+    'F5',
+    'TP8',
+    'PO8',
+    'FT8',
+    'FC5',
+    'FT7',
+    'F3',
+    'Fp2',
+    'CP2',
+    'P3',
+    'PO7',
+    'T8',
+    'P4',
+    'O2',
+    'PO10',
+    'C4',
+    'P5',
+    'CP4',
+    'O1',
+    'AF4',
+    'PO9',
+    'C5',
+    'T7',
+    'CP3',
+    'CP6',
+    'Fp1',
+    'C6',
+    'FC2',
+    'Cz',
+    'PO3',
+    'F1',
+    'Pz',
+    'AF3',
+    'P1',
+    'AFz',
+    'C2',
+    'CP1',
+    'P7',
+    'AF8',
+    'POz',
+    'F2',
+    'FC3',
+    'P8',
+    'AF7',
+    'C1',
+    'P2',
+    'C3',
+    'FC6',
+]
 
 for i, subj in tqdm(enumerate(subjects), total=len(subjects)):
     # Read in the data
     eo_path = os.path.join(base_dir, subj, f'{subj}_EO.set')
     ec_path = os.path.join(base_dir, subj, f'{subj}_EC.set')
-    raw_eo = mne.io.read_raw_eeglab(eo_path).resample(128, npad='auto')
-    raw_ec = mne.io.read_raw_eeglab(ec_path).resample(128, npad='auto')
+    raw_eo = mne.io.read_raw_eeglab(eo_path, preload=True)
+    raw_ec = mne.io.read_raw_eeglab(ec_path, preload=True)
+    missing_channels = list(set(all_chans) - set(raw_eo.ch_names))
+    for ch in missing_channels:
+        raw_eo.add_channels(
+            [
+                mne.io.RawArray(
+                    np.zeros((1, len(raw_eo.times))),
+                    mne.create_info([ch], raw_eo.info['sfreq'], ch_types='eeg'),
+                )
+            ]
+        )
+    raw_eo.info['bads'] = missing_channels
+    raw_eo.set_montage('standard_1020')
+    raw_eo = raw_eo.interpolate_bads(reset_bads=True)
+    missing_channels = list(set(all_chans) - set(raw_ec.ch_names))
+    for ch in missing_channels:
+        raw_ec.add_channels(
+            [
+                mne.io.RawArray(
+                    np.zeros((1, len(raw_ec.times))),
+                    mne.create_info([ch], raw_ec.info['sfreq'], ch_types='eeg'),
+                )
+            ]
+        )
+    raw_ec.info['bads'] = missing_channels
+    raw_ec.set_montage('standard_1020')
+    raw_eo = raw_eo.interpolate_bads(reset_bads=True)
+    raw_eo = raw_eo.resample(128, npad='auto')
+    raw_ec = raw_ec.resample(128, npad='auto')
     raw_eo.pick_channels(shared_ch_names)
     raw_ec.pick_channels(shared_ch_names)
 
@@ -129,6 +220,9 @@ for i, subj in tqdm(enumerate(subjects), total=len(subjects)):
     n_epochs_list.append(len(epochs))
 
 all_epochs = mne.concatenate_epochs(epochs_list)
+
+# %%
+all_epochs.save('all_epochs_interp-epo.fif.gz')
 
 # %%
 n_chans = 19
