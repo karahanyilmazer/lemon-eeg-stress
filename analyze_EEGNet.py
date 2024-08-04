@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
+from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader, TensorDataset
 from torchsummary import summary
 from tqdm import tqdm
@@ -306,6 +307,8 @@ criterion = nn.MSELoss()
 # criterion = nn.L1Loss()
 learning_rate = 0.01
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+
 # Training loop with early stopping
 best_val_loss = float('inf')
 patience = 20
@@ -375,6 +378,9 @@ for epoch in range(num_epochs):
         f'Val. Loss: {val_epoch_loss:.4f}\t'
         f'R2 Score: {r2:.4f}'
     )
+
+    # Step the scheduler
+    scheduler.step()
 
     if epoch in np.arange(24, 300, 25):
         torch.save(model, f'my_model_{epoch+1}.pth')
