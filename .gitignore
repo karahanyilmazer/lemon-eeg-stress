@@ -162,5 +162,7 @@ cython_debug/
 #.idea/
 
 # Project-specific ignores
-data
+data/EEG_preprocessed
+data/behavioral
+content
 *.code-workspace
