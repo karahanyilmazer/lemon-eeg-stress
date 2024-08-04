@@ -265,10 +265,6 @@ if np.any(np.isnan(X)) or np.any(np.isinf(X)):
 if np.any(np.isnan(y)) or np.any(np.isinf(y)):
     raise ValueError('Labels contain NaNs or infinities.')
 
-# Making the X and y tensors for K-Fold Cross Validation
-# X_tensor = torch.Tensor(X).unsqueeze(1)
-# y_tensor = torch.LongTensor(y)
-
 # Spliting  Data: 80% for Train and 20% for Test
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=41
