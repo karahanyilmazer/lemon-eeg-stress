@@ -125,14 +125,23 @@ for selected_feat in feat_dict.keys():
         r2_test_mean = []
         mae_train_mean = []
         mae_test_mean = []
+        mse_train_mean = []
+        mse_test_mean = []
+
         r2_train_std = []
         r2_test_std = []
         mae_train_std = []
         mae_test_std = []
+        mse_train_std = []
+        mse_test_std = []
+
         r2_train = []
         r2_test = []
         mae_train = []
         mae_test = []
+        mse_train = []
+        mse_test = []
+
         labels = []
 
         # Iterate over the columns of the DataFrame
@@ -141,6 +150,8 @@ for selected_feat in feat_dict.keys():
             r2_test_tmp = []
             mae_train_tmp = []
             mae_test_tmp = []
+            mse_train_tmp = []
+            mse_test_tmp = []
 
             y_tmp = y[selected_label]
 
@@ -169,16 +180,22 @@ for selected_feat in feat_dict.keys():
                 r2_test_tmp.append(r2_score(y_cv_test, y_pred_test))
                 mae_train_tmp.append(mean_absolute_error(y_cv_train, y_pred_train))
                 mae_test_tmp.append(mean_absolute_error(y_cv_test, y_pred_test))
+                mse_train_tmp.append(mean_squared_error(y_cv_train, y_pred_train))
+                mse_test_tmp.append(mean_squared_error(y_cv_test, y_pred_test))
 
             labels.append(selected_label)
             r2_train_mean.append(np.mean(r2_train_tmp))
             r2_test_mean.append(np.mean(r2_test_tmp))
             mae_train_mean.append(np.mean(mae_train_tmp))
             mae_test_mean.append(np.mean(mae_test_tmp))
+            mse_train_mean.append(np.mean(mse_train_tmp))
+            mse_test_mean.append(np.mean(mse_test_tmp))
             r2_train_std.append(np.std(r2_train_tmp))
             r2_test_std.append(np.std(r2_test_tmp))
             mae_train_std.append(np.std(mae_train_tmp))
             mae_test_std.append(np.std(mae_test_tmp))
+            mse_train_std.append(np.std(mse_train_tmp))
+            mse_test_std.append(np.std(mse_test_tmp))
 
             pipe.fit(X_train, y_train)
             y_pred_train = pipe.predict(X_train)
@@ -186,41 +203,39 @@ for selected_feat in feat_dict.keys():
 
             r2_train.append(r2_score(y_train, y_pred_train))
             r2_test.append(r2_score(y_test, y_pred_test))
+            mae_train.append(mean_absolute_error(y_train, y_pred_train))
+            mae_test.append(mean_absolute_error(y_test, y_pred_test))
+            mse_train.append(mean_squared_error(y_train, y_pred_train))
+            mse_test.append(mean_squared_error(y_test, y_pred_test))
 
         # Print the results
         result_df = pd.DataFrame(
             {
                 'Label': labels,
                 'R^2 Mean (Train)': r2_train_mean,
-                'R^2 Mean (CV)': r2_test_mean,
-                'MAE Mean (Train)': mae_train_mean,
-                'MAE Mean (CV)': mae_test_mean,
                 'R^2 STD (Train)': r2_train_std,
+                'R^2 Mean (CV)': r2_test_mean,
                 'R^2 STD (CV)': r2_test_std,
+                'MAE Mean (Train)': mae_train_mean,
                 'MAE STD (Train)': mae_train_std,
+                'MAE Mean (CV)': mae_test_mean,
                 'MAE STD (CV)': mae_test_std,
+                'MSE Mean (Train)': mse_train_mean,
+                'MSE STD (Train)': mse_train_std,
+                'MSE Mean (CV)': mse_test_mean,
+                'MSE STD (CV)': mse_test_std,
                 'R^2 (Train)': r2_train,
                 'R^2 (Test)': r2_test,
+                'MAE (Train)': mae_train,
+                'MAE (Test)': mae_test,
+                'MSE (Train)': mse_train,
+                'MSE (Test)': mse_test,
             }
         )
-        # result_df = result_df.sort_values('R^2 (CV)', ascending=False)
-        result_df = result_df.sort_values('MAE (CV)', ascending=True)
+        # result_df = result_df.sort_values('R^2 Mean (CV)', ascending=False)
+        result_df = result_df.sort_values('MAE Mean (CV)', ascending=True)
         result_df.to_csv(
             os.path.join('results', f'{selected_feat}_{pipe.steps[-1][0]}.csv')
         )
-
-# Print the results
-result_df = pd.DataFrame(
-    {
-        'Label': labels,
-        'R^2 (Train)': r2_train,
-        'R^2 (CV)': r2_test,
-        'MAE (Train)': mae_train,
-        'MAE (CV)': mae_test,
-    }
-)
-# result_df = result_df.sort_values('R^2 (CV)', ascending=False)
-result_df = result_df.sort_values('MAE (CV)', ascending=True)
-result_df
 
 # %%
