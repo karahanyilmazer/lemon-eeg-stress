@@ -90,10 +90,12 @@ n_subs_per_mat = len(subjects)
 n_feats_bp = 3
 n_feats_welch = len(all_chans)
 n_feats_var = len(all_chans)
+n_feats_logvar = len(all_chans)
 X_bp_abs = np.zeros((n_subs_per_mat, 2 * n_feats_bp))
 X_bp_rel = np.zeros((n_subs_per_mat, 2 * n_feats_bp))
 X_welch = np.zeros((n_subs_per_mat, 2 * n_feats_welch))
 X_var = np.zeros((n_subs_per_mat, 2 * n_feats_var))
+X_logvar = np.zeros((n_subs_per_mat, 2 * n_feats_logvar))
 
 # Define the frequency bands of interest
 freq_bands = ['theta', 'alpha', 'beta']
@@ -143,6 +145,7 @@ for i, subj in tqdm(enumerate(subjects), total=len(subjects)):
     ).ravel()
     X_welch[i, n_feats_welch:] = extractor.get_welch_feat(data, ch_names).ravel()
     X_var[i, n_feats_var:] = extractor.get_var_feat(data, ch_names).ravel()
+    X_logvar[i, n_feats_var:] = extractor.get_logvar_feat(data, ch_names).ravel()
 
     # EYES CLOSED
     # ==================================================================================
@@ -186,6 +189,7 @@ for i, subj in tqdm(enumerate(subjects), total=len(subjects)):
     ).ravel()
     X_welch[i, :n_feats_welch] = extractor.get_welch_feat(data, ch_names).ravel()
     X_var[i, :n_feats_var] = extractor.get_var_feat(data, ch_names).ravel()
+    X_logvar[i, :n_feats_var] = extractor.get_logvar_feat(data, ch_names).ravel()
 
     subj_list.append(subj)
 
@@ -203,6 +207,27 @@ loader.save_pkl(
     os.path.join(
         'feat_mats',
         'X_bp_rel_interp',
+    ),
+)
+loader.save_pkl(
+    X_welch,
+    os.path.join(
+        'feat_mats',
+        'X_welch_interp',
+    ),
+)
+loader.save_pkl(
+    X_var,
+    os.path.join(
+        'feat_mats',
+        'X_var_interp',
+    ),
+)
+loader.save_pkl(
+    X_logvar,
+    os.path.join(
+        'feat_mats',
+        'X_logvar_interp',
     ),
 )
 
