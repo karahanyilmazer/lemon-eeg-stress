@@ -8,6 +8,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 from torchsummary import summary
@@ -305,6 +306,10 @@ criterion = nn.MSELoss()
 # criterion = nn.L1Loss()
 learning_rate = 0.01
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+# Training loop with early stopping
+best_val_loss = float('inf')
+patience = 20
+trigger_times = 0
 
 # Training Loop with Validation
 num_epochs = 300
@@ -353,12 +358,26 @@ for epoch in range(num_epochs):
     r2 = r2_score(all_labels, all_outputs)
     r2_list.append(r2)
 
+    # Early stopping
+    if val_epoch_loss < best_val_loss:
+        best_val_loss = val_epoch_loss
+        trigger_times = 0
+        torch.save(model.state_dict(), 'best_model.pth')
+    else:
+        trigger_times += 1
+        if trigger_times >= patience:
+            print('Early stopping!')
+            break
+
     print(
         f'Epoch {epoch+1}/{num_epochs}\t'
         f'Loss: {epoch_loss:.4f}\t'
         f'Val. Loss: {val_epoch_loss:.4f}\t'
         f'R2 Score: {r2:.4f}'
     )
+
+    if epoch in np.arange(24, 300, 25):
+        torch.save(model, f'my_model_{epoch+1}.pth')
 
 average_loss = running_loss / len(train_loader.dataset)
 average_val_loss = val_running_loss / len(val_loader.dataset)
