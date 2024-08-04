@@ -310,6 +310,7 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 num_epochs = 300
 loss_list = []
 val_loss_list = []
+r2_list = []
 
 for epoch in range(num_epochs):
     # Training
@@ -331,19 +332,32 @@ for epoch in range(num_epochs):
     # ==================================================================================
     model.eval()
     val_running_loss = 0.0
+    all_outputs = []
+    all_labels = []
     with torch.no_grad():
         for inputs, labels in val_loader:
             outputs = model(inputs)
             loss = criterion(outputs.squeeze(), labels)
             val_running_loss += loss.item() * inputs.size(0)
 
+            # Collect outputs and labels for R2 score calculation
+            all_outputs.append(outputs.squeeze().cpu().numpy())
+            all_labels.append(labels.cpu().numpy())
+
     val_epoch_loss = val_running_loss / len(val_loader.dataset)
     val_loss_list.append(val_epoch_loss)
+
+    # Calculate R2 score
+    all_outputs = np.concatenate(all_outputs, axis=0)
+    all_labels = np.concatenate(all_labels, axis=0)
+    r2 = r2_score(all_labels, all_outputs)
+    r2_list.append(r2)
 
     print(
         f'Epoch {epoch+1}/{num_epochs}\t'
         f'Loss: {epoch_loss:.4f}\t'
-        f'Validation Loss: {val_epoch_loss:.4f}'
+        f'Val. Loss: {val_epoch_loss:.4f}\t'
+        f'R2 Score: {r2:.4f}'
     )
 
 average_loss = running_loss / len(train_loader.dataset)
