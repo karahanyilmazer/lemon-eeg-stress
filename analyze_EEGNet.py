@@ -1,5 +1,6 @@
 # %%
 import os
+import pickle
 
 import mne
 import numpy as np
@@ -200,12 +201,15 @@ shared_ch_names = [
     'AF3',
 ]
 
+# %%
 for i, subj in tqdm(enumerate(subjects), total=len(subjects)):
     # Read in the data
     eo_path = os.path.join(base_dir, subj, f'{subj}_EO.set')
     ec_path = os.path.join(base_dir, subj, f'{subj}_EC.set')
-    raw_eo = mne.io.read_raw_eeglab(eo_path).resample(128, npad='auto')
-    raw_ec = mne.io.read_raw_eeglab(ec_path).resample(128, npad='auto')
+    raw_eo = mne.io.read_raw_eeglab(eo_path)
+    raw_ec = mne.io.read_raw_eeglab(ec_path)
+    raw_eo = raw_eo.resample(128, npad='auto')
+    raw_ec = raw_ec.resample(128, npad='auto')
     raw_eo.pick_channels(shared_ch_names)
     raw_ec.pick_channels(shared_ch_names)
 
@@ -219,9 +223,16 @@ for i, subj in tqdm(enumerate(subjects), total=len(subjects)):
 all_epochs = mne.concatenate_epochs(epochs_list)
 
 # %%
-n_chans = 19
-n_times = 640
-batch_size = 64
+# all_epochs.save('all_epochs-epo.fif.gz')
+all_epochs = mne.read_epochs('all_epochs-epo.fif.gz')
+# Read the pickle file
+with open('n_epochs_list.pkl', 'rb') as pkl_file:
+    n_epochs_list = pickle.load(pkl_file)
+
+# %%
+n_chans = all_epochs.get_data().shape[1]
+n_times = all_epochs.get_data().shape[2]
+batch_size = 128
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = EEGNet(time_points=n_times, chans=n_chans).to(device)
