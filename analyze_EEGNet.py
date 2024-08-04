@@ -392,6 +392,39 @@ average_val_loss = val_running_loss / len(val_loader.dataset)
 print('Average Loss:', average_loss)
 print('Average Validation Loss:', average_val_loss)
 
-torch.save(model, 'my_model_3.pth')
+# %%
+model = ModifiedEEGNet().to(device)
+
+# Load the model weights
+model_path = 'best_model.pth'
+model.load_state_dict(torch.load(model_path, weights_only=False))
+
+# Set the model to evaluation mode
+model.eval()
+
+# Lists to store predictions and true labels
+all_predictions = []
+all_labels = []
+
+with torch.no_grad():  # Disable gradient calculation
+    for inputs, labels in test_loader:
+        # Forward pass to get predictions
+        outputs = model(inputs)
+
+        # Store predictions and true labels
+        all_predictions.append(outputs.squeeze().cpu().numpy())
+        all_labels.append(labels.cpu().numpy())
+
+# Concatenate all predictions and labels into arrays
+all_predictions = np.concatenate(all_predictions, axis=0)
+all_labels = np.concatenate(all_labels, axis=0)
+
+# Compute evaluation metrics
+mse = mean_squared_error(all_labels, all_predictions)
+r2 = r2_score(all_labels, all_predictions)
+
+# Output the results
+print(f"Test MSE: {mse:.4f}")
+print(f"Test R² Score: {r2:.4f}")
 
 # %%
